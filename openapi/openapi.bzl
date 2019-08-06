@@ -1,8 +1,12 @@
-def openapi_repositories(swagger_codegen_cli_version="2.2.2", swagger_codegen_cli_sha1="a5b48219c1f9898b0a1f639e0cb89396d5f8e0d1", prefix="io_bazel_rules_openapi"):
+def openapi_repositories(
+      openapi_cli_version="4.0.3",
+      openapi_cli_sha1="4a7e6d7c82df64a1d869e68f28f23e6afd0f9d85",
+      prefix="io_bazel_rules_openapi"):
+
     native.maven_jar(
         name = prefix + "_io_swagger_swagger_codegen_cli",
-        artifact = "io.swagger:swagger-codegen-cli:" + swagger_codegen_cli_version,
-        sha1 = swagger_codegen_cli_sha1,
+        artifact = "org.openapitools:openapi-generator-cli:" + openapi_cli_version,
+        sha1 = openapi_cli_sha1,
     )
     native.bind(
         name = prefix + '/dependency/openapi-cli',
@@ -15,17 +19,24 @@ def _comma_separated_pairs(pairs):
     ])
 
 def _new_generator_command(ctx, gen_dir, rjars):
-  java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
-  gen_cmd = str(java_path)
+  gen_cmd = [
+    ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path,
 
-  gen_cmd += " -cp {cli_jar}:{jars} io.swagger.codegen.SwaggerCodegen generate -i {spec} -l {language} -o {output}".format(
-      java = java_path,
+    '-cp {cli_jar}:{jars}'.format(
       cli_jar = ctx.file.codegen_cli.path,
       jars = ":".join([j.path for j in rjars.to_list()]),
-      spec = ctx.file.spec.path,
-      language = ctx.attr.language,
-      output = gen_dir,
-  )
+    ),
+
+    'org.openapitools.codegen.OpenAPIGenerator',
+    'generate',
+    '--input-spec',     ctx.file.spec.path,
+    '--generator-name', ctx.attr.language,
+    '--output',         gen_dir
+  ]
+
+  # java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
+  # gen_cmd = str(java_path)
+  gen_cmd = ' '.join(gen_cmd)
 
   gen_cmd += ' -D "{properties}"'.format(
       properties=_comma_separated_pairs(ctx.attr.system_properties),
@@ -58,9 +69,6 @@ def _new_generator_command(ctx, gen_dir, rjars):
       gen_cmd += " --model-package {package}".format(
           package=ctx.attr.model_package
       )
-  # fixme: by default, swagger-codegen is rather verbose. this helps with that but can also mask useful error messages
-  # when it fails. look into log configuration options. it's a java app so perhaps just a log4j.properties or something
-  gen_cmd += " 2>/dev/null"
   return gen_cmd
 
 def _impl(ctx):
@@ -70,7 +78,7 @@ def _impl(ctx):
         dirname=ctx.file.spec.dirname,
         rule_name=ctx.attr.name
     )
-    
+
     commands = [
       "mkdir -p {gen_dir}".format(
         gen_dir=gen_dir
@@ -97,6 +105,9 @@ def _impl(ctx):
         command=" && ".join(commands),
         progress_message="generating openapi sources %s" % ctx.label,
         arguments=[],
+
+        # TODO: This does not appear to work
+        env={'JAVA_OPTS': '-Dlog.level=%s' % ctx.attr.log_level}
     )
     return struct(
         codegen=ctx.outputs.codegen
@@ -148,6 +159,7 @@ openapi_gen = rule(
         "model_package": attr.string(),
         "additional_properties": attr.string_dict(),
         "system_properties": attr.string_dict(),
+        "log_level": attr.string(default="debug"),
         "type_mappings": attr.string_dict(),
         "_jdk": attr.label(
             default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
