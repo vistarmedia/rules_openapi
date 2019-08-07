@@ -95,7 +95,7 @@ def _impl(ctx):
       )
     ]
 
-    inputs = ctx.files._jdk + [
+    inputs = ctx.files._jdk + ctx.files.data + [
         ctx.file.codegen_cli,
         ctx.file.spec
     ] + cjars.to_list() + rjars.to_list()
@@ -161,6 +161,7 @@ openapi_gen = rule(
         "system_properties": attr.string_dict(),
         "log_level": attr.string(default="debug"),
         "type_mappings": attr.string_dict(),
+        "data": attr.label_list(allow_files=[".json", ".yaml"]),
         "_jdk": attr.label(
             default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
             providers = [java_common.JavaRuntimeInfo]
