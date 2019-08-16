@@ -20,7 +20,7 @@ def _comma_separated_pairs(pairs):
 
 def _new_generator_command(ctx, gen_dir, rjars):
   gen_cmd = [
-    ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path,
+    str(ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path),
 
     '-cp {cli_jar}:{jars}'.format(
       cli_jar = ctx.file.codegen_cli.path,
@@ -31,16 +31,13 @@ def _new_generator_command(ctx, gen_dir, rjars):
     'generate',
     '--input-spec',     ctx.file.spec.path,
     '--generator-name', ctx.attr.language,
-    '--output',         gen_dir
+    '--output',         gen_dir,
+    '-D "{properties}"'.format(properties=_comma_separated_pairs(ctx.attr.system_properties))
   ]
 
   # java_path = ctx.attr._jdk[java_common.JavaRuntimeInfo].java_executable_exec_path
   # gen_cmd = str(java_path)
   gen_cmd = ' '.join(gen_cmd)
-
-  gen_cmd += ' -D "{properties}"'.format(
-      properties=_comma_separated_pairs(ctx.attr.system_properties),
-  )
 
   additional_properties = dict(ctx.attr.additional_properties)
 
