@@ -85,11 +85,11 @@ def _impl(ctx):
       "find {gen_dir} -exec touch -t 198001010000 {{}} \;".format(
          gen_dir=gen_dir
       ),
-      "{jar} cMf {target} -C {srcs} .".format(
-          jar="%s/bin/jar" % ctx.attr._jdk[java_common.JavaRuntimeInfo].java_home,
-          target=ctx.outputs.codegen.path,
-          srcs=gen_dir
-      )
+      "cp -r {gen_dir}/* {bin_dir}/{dirname}".format(
+        gen_dir=gen_dir,
+        bin_dir=ctx.bin_dir.path,
+        dirname=ctx.file.spec.dirname
+      ),
     ]
 
     inputs = ctx.files._jdk + ctx.files.data + [
@@ -98,16 +98,13 @@ def _impl(ctx):
     ] + cjars.to_list() + rjars.to_list()
     ctx.actions.run_shell(
         inputs=inputs,
-        outputs=[ctx.actions.declare_directory("%s" % (ctx.attr.name)), ctx.outputs.codegen],
+        outputs=[ctx.actions.declare_directory("%s" % (ctx.attr.name))] + ctx.outputs.outputs,
         command=" && ".join(commands),
         progress_message="generating openapi sources %s" % ctx.label,
         arguments=[],
 
         # TODO: This does not appear to work
         env={'JAVA_OPTS': '-Dlog.level=%s' % ctx.attr.log_level}
-    )
-    return struct(
-        codegen=ctx.outputs.codegen
     )
 
 # taken from rules_scala
@@ -159,6 +156,7 @@ openapi_gen = rule(
         "log_level": attr.string(default="debug"),
         "type_mappings": attr.string_dict(),
         "data": attr.label_list(allow_files=[".json", ".yaml"]),
+        "outputs": attr.output_list(allow_empty=False, mandatory=True),
         "_jdk": attr.label(
             default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
             providers = [java_common.JavaRuntimeInfo]
@@ -168,9 +166,6 @@ openapi_gen = rule(
             default = Label("//external:io_bazel_rules_openapi/dependency/openapi-cli"),
             allow_single_file = True,
         ),
-    },
-    outputs = {
-        "codegen": "%{name}_codegen.srcjar",
     },
     implementation = _impl,
 )
