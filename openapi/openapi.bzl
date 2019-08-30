@@ -98,7 +98,7 @@ def _impl(ctx):
     ] + cjars.to_list() + rjars.to_list()
     ctx.actions.run_shell(
         inputs=inputs,
-        outputs=[ctx.actions.declare_directory("%s" % (ctx.attr.name))] + ctx.outputs.outputs,
+        outputs=ctx.outputs.outputs,
         command=" && ".join(commands),
         progress_message="generating openapi sources %s" % ctx.label,
         arguments=[],
