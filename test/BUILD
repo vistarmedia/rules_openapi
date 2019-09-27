@@ -2,14 +2,29 @@ load("//openapi:openapi.bzl", "openapi_gen")
 
 openapi_gen(
     name = "petstore",
+    language = "openapi-yaml",
+    spec = "petstore.yaml",
+    outputs = [
+        "openapi/openapi.yaml"
+    ],
+)
+
+openapi_gen(
+    name = "petstore_go",
     language = "go",
     spec = "petstore.yaml",
+    outputs = [
+      "api_pets.go"
+    ]
 )
 
 openapi_gen(
     name = "petstore_java",
     language = "java",
     spec = "petstore.yaml",
+    outputs = [
+        "src"
+    ],
 )
 
 openapi_gen(

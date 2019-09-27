@@ -98,7 +98,7 @@ def _impl(ctx):
     ] + cjars.to_list() + rjars.to_list()
     ctx.actions.run_shell(
         inputs=inputs,
-        outputs=ctx.outputs.outputs,
+        outputs=[ctx.actions.declare_directory("%s" % (ctx.attr.name))] + ctx.outputs.outputs,
         command=" && ".join(commands),
         progress_message="generating openapi sources %s" % ctx.label,
         arguments=[],
@@ -156,7 +156,7 @@ openapi_gen = rule(
         "log_level": attr.string(default="debug"),
         "type_mappings": attr.string_dict(),
         "data": attr.label_list(allow_files=[".json", ".yaml"]),
-        "outputs": attr.output_list(allow_empty=False, mandatory=True),
+        "outputs": attr.output_list(allow_empty=True, mandatory=False),
         "_jdk": attr.label(
             default=Label("@bazel_tools//tools/jdk:current_java_runtime"),
             providers = [java_common.JavaRuntimeInfo]
