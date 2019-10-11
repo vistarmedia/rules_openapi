@@ -85,10 +85,9 @@ def _impl(ctx):
       "find {gen_dir} -exec touch -t 198001010000 {{}} \;".format(
          gen_dir=gen_dir
       ),
-      "cp -r {gen_dir}/* {bin_dir}/{dirname}".format(
+      "cp -r {gen_dir}/* {dirname}".format(
         gen_dir=gen_dir,
-        bin_dir=ctx.bin_dir.path,
-        dirname=ctx.file.spec.dirname
+        dirname="%s/%s" % (ctx.bin_dir.path, ctx.label.package)
       ),
     ]
 

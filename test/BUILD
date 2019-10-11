@@ -62,3 +62,12 @@ openapi_gen(
         "src/main/java/org/openapitools/client/model/Error.java",
     ]
 )
+
+openapi_gen(
+    name = "output_in_rule_di",
+    language = "typescript-node",
+    spec = "nested/directory/petstore.yaml",
+    outputs = [
+        "api.ts"
+    ]
+)
