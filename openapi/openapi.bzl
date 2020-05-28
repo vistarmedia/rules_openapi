@@ -1,12 +1,16 @@
+load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
+
 def openapi_repositories(
       openapi_cli_version="4.0.3",
-      openapi_cli_sha1="4a7e6d7c82df64a1d869e68f28f23e6afd0f9d85",
+      openapi_cli_sha256="c5b1f9925740026b21929b1b86dff1a47c92d2b32bd56b64552fa028cc6a09f4",
       prefix="io_bazel_rules_openapi"):
 
-    native.maven_jar(
+    jvm_maven_import_external(
         name = prefix + "_io_swagger_swagger_codegen_cli",
         artifact = "org.openapitools:openapi-generator-cli:" + openapi_cli_version,
-        sha1 = openapi_cli_sha1,
+        artifact_sha256 = openapi_cli_sha256,
+        server_urls = ["https://repo.maven.apache.org/maven2"],
+        licenses = ["notice"],  # Apache 2.0 License
     )
     native.bind(
         name = prefix + '/dependency/openapi-cli',
