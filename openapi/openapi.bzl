@@ -125,7 +125,7 @@ def _collect_jars(targets):
             runtime_jars = depset(transitive = [runtime_jars, target.scala.transitive_runtime_deps])
             runtime_jars = depset(transitive = [runtime_jars, target.scala.transitive_runtime_exports])
             found = True
-        if hasattr(target, "JavaInfo"):
+        if JavaInfo in target:
             # see JavaSkylarkApiProvider.java,
             # this is just the compile-time deps
             # this should be improved in bazel 0.1.5 to get outputs.ijar
